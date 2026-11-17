@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: user-service
+  datasource:
+    # 값은 K8s Deployment 환경변수(SPRING_DATASOURCE_URL/USERNAME/PASSWORD)로 주입한다
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/app}
+    username: ${SPRING_DATASOURCE_USERNAME:app}
+    password: ${SPRING_DATASOURCE_PASSWORD:app}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  lifecycle:
+    # SIGTERM 후 처리 중인 요청을 마칠 시간. terminationGracePeriodSeconds 보다 짧아야 한다
+    timeout-per-shutdown-phase: 20s
+
+server:
+  port: 8080
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+devbook:
+  auth:
+    issuer: devbook
+    audience: devbook-api
+    access-token-ttl: 15m
+    refresh-token-ttl: 14d
+    # K8s Secret user-jwt-signing-key 를 이 경로에 마운트한다 (make secrets 가 생성)
+    private-key-path: /etc/devbook/jwt/private.pem
+    public-key-path: /etc/devbook/jwt/public.pem
+    # 운영(https)은 true. 로컬 http 에서는 Deployment 환경변수로 false (DEVBOOK_AUTH_COOKIESECURE)
+    cookie-secure: true
